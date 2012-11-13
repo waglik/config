@@ -1,3 +1,15 @@
+#heroku config
+#worker_processes 3 # amount of unicorn workers to spin up
+#timeout 30         # restarts workers that hang for 30 seconds
+#preload_app true
+#
+#after_fork do |server, worker|
+#  defined?(ActiveRecord::Base) and
+#  ActiveRecord::Base.establish_connection
+#end
+
+
+#chanel config
 APP_PATH = "/var/www/stl"
 # Sample verbose configuration file for Unicorn (not Rack)
 #
@@ -19,6 +31,8 @@ worker_processes 4
 # If running the master process as root and the workers as an unprivileged
 # user, do this to switch euid/egid in the workers (also chowns logs):
 # user "unprivileged_user", "unprivileged_group"
+
+user "nginx"
 
 # Help ensure your application will always spawn in the symlinked
 # "current" directory that Capistrano sets up.
