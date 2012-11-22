@@ -32,12 +32,12 @@ worker_processes 4
 # user, do this to switch euid/egid in the workers (also chowns logs):
 # user "unprivileged_user", "unprivileged_group"
 
-user "nginx"
+user "paniewa"
 
 # Help ensure your application will always spawn in the symlinked
 # "current" directory that Capistrano sets up.
 working_directory APP_PATH #able in 0.94.0+
-
+Unicorn::HttpServer::START_CTX[0] = "/usr/local/rvm/gems/ruby-1.9.3-p327/bin/unicorn_rails"
 # listen on both a Unix domain socket and a TCP port,
 # we use a shorter backlog for quicker failover when busy
 listen "/tmp/.sock", :backlog => 64
@@ -60,6 +60,9 @@ stdout_path APP_PATH + "/log/unicorn.stderr.log"
 preload_app true
 GC.respond_to?(:copy_on_write_friendly=) and
   GC.copy_on_write_friendly = true
+before_exec do |server|
+   ENV["BUNDLE_GEMFILE"] = "/var/www/stl/Gemfile"
+end
 
 before_fork do |server, worker|
   # the following is highly recomended for Rails + "preload_app true"
@@ -90,6 +93,23 @@ before_fork do |server, worker|
   # helps (but does not completely) prevent identical, repeated signals
   # from being lost when the receiving process is busy.
   # sleep 1
+  # Before forking, kill the master process that belongs to the .oldbin PID.
+  # This enables 0 downtime deploys.
+  puts server.pid
+  puts "server.pid: #{File.read(server.pid).to_i}"
+  puts "jestem tutaj"
+  old_pid = "/var/www/stl/tmp/pid/unicorn.pid.oldbin"
+  if File.exists?(old_pid) && server.pid != old_pid
+    puts "warunek spełniony"
+    begin
+      puts "zabijam proces..."
+      Process.kill("QUIT", File.read(old_pid).to_i)
+      puts "zabilam"
+    rescue Errno::ENOENT, Errno::ESRCH
+      puts "jestem w rescue"
+      # someone else did our job for us
+    end
+  end
 end
 
 after_fork do |server, worker|
@@ -107,3 +127,7 @@ after_fork do |server, worker|
   # between any number of forked children (assuming your kernel
   # correctly implements pread()/pwrite() system calls)
 end
+
+#before_exec do |server|
+#  ENV["BUNDLE_GEMFILE"] = "/path/to/app/current/Gemfile"
+#end
