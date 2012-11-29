@@ -16,7 +16,7 @@
 ##
 ## Start Monit in the background (run as a daemon):
 #
-  set daemon 120            # check services at 2-minute intervals
+  set daemon 30            # check services at 2-minute intervals
 #   with start delay 240    # optional: delay the first check by 4-minutes (by 
 #                           # default Monit check immediately after Monit start)
 #
@@ -56,7 +56,7 @@
 #
 
 set mailserver smtp.gmail.com port 587
-    username "<email>" password "<password>"
+    username "stl.monit@gmail.com" password "PutinIsBad"
     using tlsv1
     with timeout 30 seconds
 
@@ -124,7 +124,7 @@ set mailserver smtp.gmail.com port 587
 set httpd port 2812 and
 #    use address localhost  # only accept connection from localhost
     allow localhost        # allow localhost to connect to the server and
-    allow <my_ip_addr>
+    allow 89.27.124.193
     allow admin:monit      # require user 'admin' with password 'monit'
 #    allow @monit           # allow users of group 'monit' to connect (rw)
 #    allow @users readonly  # allow users of group 'users' to connect readonly
@@ -192,13 +192,20 @@ set httpd port 2812 and
 #    group server
 #    
 
-check process nginx with pidfile /tmp/nginx.pid
+check process nginx with pidfile /var/run/nginx.pid 
    group nginx
    start program = "/etc/init.d/nginx start"
    stop program = "/etc/init.d/nginx stop"
    if failed host localhost port 80 protocol http then restart
    if cpu is greater than 60% for 2 cycles then alert
 
+check host feeds with address 127.0.0.1
+    start program = "/usr/bin/node /var/www/feedsloving/app.js"
+    stop program  = "/usr/bin/pkill -f 'node /var/www/feedsloving/app.js'"
+    if failed port 3002 protocol HTTP
+        request /
+        with timeout 10 seconds
+        then restart
     
 ## Check filesystem permissions, uid, gid, space and inode usage. Other services,
 ## such as databases, may depend on this resource and an automatically graceful
