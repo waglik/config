@@ -266,5 +266,6 @@ check host feeds with address 127.0.0.1
 ## It is possible to include additional configuration parts from other files or
 ## directories.
 #
+   include /var/www/stl/shared/delayed_job.monitrc
    include /etc/monit/conf.d/*
 #
